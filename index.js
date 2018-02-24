@@ -3,8 +3,11 @@ const express = require('express');
 const app = express();
 
 app.get('/', function(request, response) {
-    validateQuery(request.query);
-    response.send(recipes.recipeResults);
+    //validateQuery(request.query);
+    recipes.getRecipes(request.query).then(function(items){
+        console.log(items);
+        response.send(items);
+    });    
 });
 
 let validateQuery = function(query) {
