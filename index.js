@@ -4,11 +4,12 @@ const app = express();
 
 app.get('/', function(request, response) {
     //validateQuery(request.query);
-    recipes.getRecipes(request.query).then(function(items){
-        console.log(items);
-        response.send(items);
-    });    
-});
+    recipes.getRecipes(request.query)
+        .then(function(items){
+            console.log(items);
+            response.send(items);
+        });    
+    });
 
 let validateQuery = function(query) {
     if (query['i'])
