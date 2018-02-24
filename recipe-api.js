@@ -1,16 +1,12 @@
 const fetch = require('node-fetch');
 
 /*
-
 fetch('http://www.recipepuppy.com/api/?i=onions,garlic&q=omelet&p=1')
-
-{ 
-    title: 'Creamy Tomato Sauce for Pasta',
+{   title: 'Creamy Tomato Sauce for Pasta',
     href: 'http://www.recipezaar.com/Creamy-Tomato-Sauce-for-Pasta-112945',
     ingredients: 'cream, cream cheese, basil, black pepper, garlic, olive oil, parmesan cheese, pesto, salt, tomato sauce',
     thumbnail: '' 
-}
-  */
+}*/
 
 const recipes = {
     getRecipes: function(query) {
@@ -22,32 +18,56 @@ const recipes = {
             .then(function(originalRecipes){
                 let formattedRecipes = [];
 
-                originalRecipes.forEach(function(result) {
-                                        
-                    //let finalLink = 
-                    let item = removeInvalidRecipeLink(result);
-                    //.then(link => {
-                    //    return link;                        
-                    //});
-
-                    //finalLink.then(l => console.log(l));
-                    /*
-                    let item = { 
-                        title: result.title, 
-                        href: finalLink, 
-                        numberOfIngredients: result.ingredients.split(',').length 
-                    };
-                    */
+                originalRecipes.forEach(function(nextRecipe) {
+                    let item = removeInvalidRecipeLink(nextRecipe);
                     formattedRecipes.push(item);
                 });
 
                 return formattedRecipes;
-            });            
-                  
+            });   
+    },
+    getAllRecipes: function(query){
+    
+        let hasItems = true;
+        let recipeCollection = [];
+        let pageNumber = 1;
+
+        // set page number to 1
+        query.p = pageNumber;
+
+        //while (hasItems)
+        for (let i = 1; i < 10; i++)
+        {
+            query.p = i;
+            console.log('all page' + i.toString());
+            recipes.getRecipes(query)
+                .then(function(items){
+
+                    console.log('item count: ' + items.length.toString());
+
+                    if (items && items.length > 0)
+                    {
+                        //console.log(items.length);
+                        recipeCollection.concat(items);
+                        //pageNumber++;
+                        //query.p = pageNumber;
+                    }
+                    else{                                            
+                        hasItems = false;
+                    }
+                })
+                .catch(function(error){                    
+                    })
+                .then(function() {                                        
+                    }, function(){
+                });                
+            
+            pageNumber++;
+        };
     }
 }
 
-let getInitialRecipes = function(url)
+const getInitialRecipes = function(url)
 {
     return fetch(url) 
         .then(res => res.json())
@@ -90,7 +110,6 @@ const buildQuerystring = function(query) {
     if (query.p)
         queryString += '&p=' + query.p;
 
-    //console.log(queryString);
     return queryString;    
 }
 

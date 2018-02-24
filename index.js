@@ -6,9 +6,16 @@ app.get('/', function(request, response) {
     //validateQuery(request.query);
     recipes.getRecipes(request.query)
         .then(function(items){
-            console.log(items);
+            //console.log(items);
             response.send(items);
         });    
+    });
+
+app.get('/all', function(request, response) {
+    recipes.getAllRecipes(request.query)
+        .then(function(items){
+            response.send('total items: ' + items.length);
+        });
     });
 
 let validateQuery = function(query) {
