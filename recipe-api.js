@@ -1,13 +1,5 @@
 const fetch = require('node-fetch');
 
-/*
-fetch('http://www.recipepuppy.com/api/?i=onions,garlic&q=omelet&p=1')
-{   title: 'Creamy Tomato Sauce for Pasta',
-    href: 'http://www.recipezaar.com/Creamy-Tomato-Sauce-for-Pasta-112945',
-    ingredients: 'cream, cream cheese, basil, black pepper, garlic, olive oil, parmesan cheese, pesto, salt, tomato sauce',
-    thumbnail: '' 
-}*/
-
 const recipes = {
     getRecipes: function(query) {
         
@@ -16,14 +8,15 @@ const recipes = {
         
         return getInitialRecipes(url)
             .then(function(originalRecipes){
-                let formattedRecipes = [];
-
-                originalRecipes.forEach(function(nextRecipe) {
-                    let item = removeInvalidRecipeLink(nextRecipe);
-                    formattedRecipes.push(item);
-                });
-
-                return formattedRecipes;
+                
+                const promises = originalRecipes.map(rec =>
+                    removeInvalidRecipeLink(rec)                     
+                )
+                return Promise.all(promises);                
+            })
+            .catch(function(error){
+                console.log('failed inside getRecipes ' + error.toString());
+                return [];
             });   
     },
     getAllRecipes: function(query){
@@ -48,7 +41,7 @@ const recipes = {
                     if (items && items.length > 0)
                     {
                         //console.log(items.length);
-                        recipeCollection.concat(items);
+                        recipeCollection.concat(items);                        
                         //pageNumber++;
                         //query.p = pageNumber;
                     }
@@ -64,6 +57,8 @@ const recipes = {
             
             pageNumber++;
         };
+
+        console.log('total ' + recipeCollection.length.toString);
     }
 }
 
@@ -77,27 +72,24 @@ const getInitialRecipes = function(url)
 }   
 
 const removeInvalidRecipeLink = function(recipe){
-    let item = { 
-        title: recipe.title, 
-        href: recipe.href, 
-        numberOfIngredients: recipe.ingredients.split(',').length 
-    };
-
-    fetch(recipe.href)
+    return fetch(recipe.href)
         .then(function(link)
         {
-            if (!link.ok)
-               item.href = '';             
+            if (link.ok)
+                return { 
+                    title: recipe.title, 
+                    href: recipe.href, 
+                    numberOfIngredients: recipe.ingredients.split(',').length 
+                };         
         })
         .catch(function(error){
-            console.log('error with link: ' + recipe.href);
-            item.href = '';            
-        })
-        .then(function() {                                        
-            }, function(){                
-        });
-        
-    return item;        
+            console.log('error in remove bad links ' + error.toString());
+            return { 
+                title: recipe.title, 
+                href: '', 
+                numberOfIngredients: recipe.ingredients.split(',').length 
+            };      
+        });        
 }
 
 const buildQuerystring = function(query) {
