@@ -1,4 +1,5 @@
 const fetch = require('node-fetch');
+const _ = require('lodash');
 
 const recipes = {
     getRecipes: function(query) {
@@ -7,8 +8,7 @@ const recipes = {
         const url = 'http://www.recipepuppy.com/api/?' + queryString;        
         
         return getInitialRecipes(url)
-            .then(function(originalRecipes){
-                
+            .then(function(originalRecipes){                
                 const promises = originalRecipes.map(rec =>
                     removeInvalidRecipeLink(rec)                     
                 )
@@ -16,50 +16,27 @@ const recipes = {
             })
             .catch(function(error){
                 console.log('failed inside getRecipes ' + error.toString());
-                return [];
             });   
     },
-    getAllRecipes: function(query){
-    
-        let hasItems = true;
-        let recipeCollection = [];
-        let pageNumber = 1;
+    getAllRecipes: function(query){            
+        // lets default to first 10 pages
+        // to get all recipes
 
-        // set page number to 1
-        query.p = pageNumber;
+        let pageNumbers = [1,2,3,4,5,6,7,8,9,10];
 
-        //while (hasItems)
-        for (let i = 1; i < 10; i++)
-        {
-            query.p = i;
-            console.log('all page' + i.toString());
-            recipes.getRecipes(query)
-                .then(function(items){
+        const promises = pageNumbers.map(page => {
+            query.p = page;           
+            return recipes.getRecipes(query);                     
+        })
 
-                    console.log('item count: ' + items.length.toString());
-
-                    if (items && items.length > 0)
-                    {
-                        //console.log(items.length);
-                        recipeCollection.concat(items);                        
-                        //pageNumber++;
-                        //query.p = pageNumber;
-                    }
-                    else{                                            
-                        hasItems = false;
-                    }
-                })
-                .catch(function(error){                    
-                    })
-                .then(function() {                                        
-                    }, function(){
-                });                
-            
-            pageNumber++;
-        };
-
-        console.log('total ' + recipeCollection.length.toString);
+        return Promise.all(promises);
     }
+}
+
+// function to sort recipes by ingredients
+// lodash has lots of utilities to help us here
+const findRecipeWithMostIngredients = function(recipes){
+    return _.sortBy(recipes, ['numberOfIngredients']); 
 }
 
 const getInitialRecipes = function(url)
@@ -73,8 +50,7 @@ const getInitialRecipes = function(url)
 
 const removeInvalidRecipeLink = function(recipe){
     return fetch(recipe.href)
-        .then(function(link)
-        {
+        .then(function(link) {        
             if (link.ok)
                 return { 
                     title: recipe.title, 
@@ -82,8 +58,8 @@ const removeInvalidRecipeLink = function(recipe){
                     numberOfIngredients: recipe.ingredients.split(',').length 
                 };         
         })
-        .catch(function(error){
-            console.log('error in remove bad links ' + error.toString());
+        .catch(function(error) {
+            //console.log('error in remove bad links ' + error.toString());
             return { 
                 title: recipe.title, 
                 href: '', 
